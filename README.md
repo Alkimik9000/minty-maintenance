@@ -91,12 +91,6 @@ Log storage after cleanup: 362.4M
 
 ---
 
-### Timeshift: safety checkpoint (important)
-- If Timeshift is available and not using the BTRFS backend, the script finds the most recent snapshot and adds a note to its `info.json` that it’s the "Maintenance checkpoint — last snapshot before updates & cleanup".
-- If Timeshift isn’t installed (or BTRFS is used), the report explains the situation and next steps — still safely.
-
----
-
 ### Final Summary at the end
 The report closes with a compact table and a space summary. Here’s an example where a single run freed up a whopping ~27 GB:
 
@@ -133,13 +127,3 @@ Auto Updates                  | ✅ Success          | Auto-updates enabled
 
 ---
 
-### Keep the GitHub formatting crisp
-- Write normal paragraphs as plain Markdown.
-- Put examples/demos inside fenced code blocks (triple backticks) so they render as clean “boxes”.
-- Use `---` for dividers between sections.
-- Keep headings at `##` / `###` for skimmability.
-
----
-
-### Cool, simple, done
-This is my kind of tooling: safe by default, clear in results, and chill to use. One command, one report, and on a good day… 27 GB back.
