@@ -16,6 +16,7 @@ A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy — a
 - **Predictability**: I can dry‑run to preview actions and impact.
 - **Safety**: The most recent Timeshift snapshot is annotated as the last one before maintenance begins.
 - **Clarity**: A single TXT report tells me what changed and how much space moved.
+-  **Space savings**: Reclaims significant disk space, like the 27GB freed in one run, keeping my system lean and efficient.
 
 ### What I learned (and care about)
 - Build automation that I personally need.
