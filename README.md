@@ -32,8 +32,7 @@ A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy — a
 
 ---
 
-### Correct Table of Contents (Chapters)
-These are the actual chapters produced by `mint-maintainer.sh` (the earlier list you saw elsewhere was incorrect):
+### Table of Contents (Chapters)
 
 1) Create a Safety Checkpoint (Timeshift)
 2) Updating Command‑Line Tools (Homebrew)
