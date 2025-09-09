@@ -6,7 +6,7 @@
 [![Contribute](https://img.shields.io/badge/Contribute-Welcome-brightgreen.svg)](https://github.com/Alikimik9000/minty-maintenance/blob/main/CONTRIBUTING.md)
 ![Made with ❤️](https://img.shields.io/badge/Made%20with-%E2%9D%A4-red)
 
-A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy — and writes a friendly, plain‑English report every time it runs. It’s practical, transparent, and a little fun.
+A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy - and writes a friendly, plain‑English report every time it runs. It’s practical, transparent, and a little fun.
 
 ### Why I built this
 - **Peace of mind**: I wanted updates that explain themselves.
