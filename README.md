@@ -90,38 +90,47 @@ Log storage after cleanup: 362.4M
 
 ---
 
-### Final Summary at the end
-The report closes with a compact table and a space summary. Here’s an example where a single run freed up a whopping ~27 GB:
+# ------------------------------------------------------------
+# Chapter 21 — Maintenance Complete!
+# ------------------------------------------------------------
 
-```text
+
 🎉 All done! Here's what happened today:
 
-Task                          | Status             | Notes
-------------------------------|--------------------|------------------------------
-Safety Checkpoint             | ✅ Success          | Checkpoint marked successfully
-Homebrew Tools                | ✅ Success          | Tools updated
-System Updates                | ✅ Success          | Updated successfully
-Package Cleanup               | ✅ Success          | Cleaned 22 orphans
-Flatpak Apps                  | ✅ Success          | 9 apps updated
-Snap Apps                     | ✅ Success          | Old versions cleaned
-Python Tools                  | ✅ Success          | Updated packages
-AppImage Check                | ✅ Success          | None found
-Firmware Updates              | ⚠️ Needs Attention  | Restart needed
-Log Cleanup                   | ✅ Success          | Cleaned to 362.4M
-Kernel Cleanup                | ✅ Success          | Old kernels removed
-Disk Health                   | ✅ Success          | All drives healthy
-GNOME Extensions              | ✅ Success          | Extensions updated
-Docker Cleanup                | ✅ Success          | Cleaned unused containers
-Search Database               | ✅ Success          | Database refreshed
-Deep Clean                    | ✅ Success          | Deep cleaned
-SSD Optimization              | ✅ Success          | SSDs optimized
-System Health                 | ✅ Success          | All services healthy
-Graphics Card                 | ✅ Success          | GPU healthy, driver OK
-Auto Updates                  | ✅ Success          | Auto-updates enabled
+
+Task                           | Status               | Notes                         
+------------------------------ | -------------------- | ------------------------------
+Safety Checkpoint              | ⚠️ Needs Attention | No data                       
+Homebrew Tools                 | ✅ Success          | Not installed (optional)      
+System Updates                 | ⚠️ Needs Attention | Updated successfully          
+Package Cleanup                | ✅ Success          | Cleaned 22 orphans            
+Flatpak Apps                   | ✅ Success          | 9 apps updated                
+Snap Apps                      | ✅ Success          | Updated & cleaned old versions
+Python Tools                   | ✅ Success          | Pipx apps checked             
+AppImage Check                 | ✅ Success          | Found 6 AppImages, 8 /opt apps
+Firmware Updates               | ⚠️ Needs Attention | Updates installed - restart needed
+Log Cleanup                    | ✅ Success          | Cleaned to 362.4M             
+Kernel Cleanup                 | ⚠️ Needs Attention | Cleaned old kernels           
+Disk Health                    | ✅ Success          | All drives healthy            
+GNOME Extensions               | ⚠️ Needs Attention | 8 extensions updated          
+Docker Cleanup                 | ✅ Success          | No data                       
+Search Database                | ⚠️ Needs Attention | Installed and initialized     
+Deep Clean                     | ✅ Success          | Deep cleaned                  
+SSD Optimization               | ⚠️ Needs Attention | SSDs optimized                
+System Health                  | ⚠️ Needs Attention | Some service issues           
+Graphics Card                  | ✅ Success          | GPU healthy, driver 550.163.01
+Auto Updates                   | ⚠️ Needs Attention | Not installed                 
 
 📊 Space Summary:
    🎉 Freed up approximately 27648MB!
    Available space: 529G
+Script encountered an error but continuing to summary...
+
+📋 Overall Assessment:
+   ⚠️ Several items need your attention.
+   Review the orange items above for details.
+
+💾 This report has been saved
 ```
 
 ---
