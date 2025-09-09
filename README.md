@@ -33,7 +33,7 @@ A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy — a
 ---
 
 ### Correct Table of Contents (Chapters)
-These are the actual chapters produced by `update_all_improved.sh` (the earlier list you saw elsewhere was incorrect):
+These are the actual chapters produced by `mint-maintainer.sh` (the earlier list you saw elsewhere was incorrect):
 
 1) Create a Safety Checkpoint (Timeshift)
 2) Updating Command‑Line Tools (Homebrew)
