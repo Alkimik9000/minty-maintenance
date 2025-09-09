@@ -8,7 +8,7 @@
 A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy — and writes a friendly, plain‑English report every time it runs. It’s practical, transparent, and a little fun.
 
 ### Why I built this
-- **Peace of mind**: I wanted updates that explain themselves, not a black box.
+- **Peace of mind**: I wanted updates that explain themselves.
 - **Trustworthy automation**: Each chapter checks first, narrates actions, and errs on the side of safety.
 - **Time-saver**: One command, a full system pass, and a clean summary at the end.
 
@@ -18,14 +18,13 @@ A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy — a
 - **Clarity**: A single TXT report tells me what changed and how much space moved.
 
 ### What I learned (and care about)
-- Build automation for humans — explanation beats mystery.
+- Build automation that I personally need.
 - Safety nets (snapshots, checks, gates) build confidence.
 - Small tools, big leverage: clear UX makes infra feel effortless.
 
 ---
 
 ### Key features
-- **Narrated report** explaining what’s happening and why it matters.
 - **Safety-first flow** where every chapter checks state and handles errors gracefully.
 - **Timeshift annotation**: marks the latest snapshot as the pre‑maintenance checkpoint.
 - **Dry‑run mode** to preview changes and space impact before committing.
