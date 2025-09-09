@@ -3,6 +3,7 @@
 ![Bash](https://img.shields.io/badge/Bash-4EAA25?logo=gnu-bash&logoColor=white)
 ![Linux Mint](https://img.shields.io/badge/Linux%20Mint-87CF3E?logo=linuxmint&logoColor=white)
 ![Ubuntu Base](https://img.shields.io/badge/Ubuntu%2024.04%20base-E95420?logo=ubuntu&logoColor=white)
+[![Contribute](https://img.shields.io/badge/Contribute-Welcome-brightgreen.svg)](https://github.com/Alikimik9000/minty-maintenance/blob/main/CONTRIBUTING.md)
 ![Made with ❤️](https://img.shields.io/badge/Made%20with-%E2%9D%A4-red)
 
 A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy — and writes a friendly, plain‑English report every time it runs. It’s practical, transparent, and a little fun.
