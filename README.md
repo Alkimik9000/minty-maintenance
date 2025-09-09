@@ -63,10 +63,10 @@ Every chapter runs with safety in mind and logs clearly to the TXT report.
 ### Usage
 ```bash
 # Full maintenance run (writes a narrated report next to the script)
-bash update_all_improved.sh
+bash minty_maintanance.sh
 
 # Dry‑run (no changes) — preview what would happen and current state
-bash update_all_improved.sh dry-run
+bash minty_maintanance.sh dry-run
 ```
 
 ---
