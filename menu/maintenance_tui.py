@@ -78,12 +78,6 @@ class ModuleTree(Widget):
         self.modules = modules
         self.checkboxes: Dict[str, Checkbox] = {}
         self.selected_module: Optional[str] = None
-        self.group_expanded: Dict[str, bool] = {
-            "sys": True,
-            "apps": True, 
-            "clean": True,
-            "health": True
-        }
     
     def compose(self) -> ComposeResult:
         """Build the module tree"""
@@ -120,43 +114,31 @@ class ModuleTree(Widget):
             }
             
             for group_id, (group_label, items) in groups.items():
-                # Create group container
-                with Container(classes="module-group") as group_container:
-                    # Group header with expand/collapse
-                    chevron = "▾" if self.group_expanded.get(group_id, True) else "▸"
-                    header_btn = Button(chevron + "  " + group_label, 
-                                      id="hdr-" + group_id, 
-                                      classes="group-header")
-                    header_btn.styles.height = "auto"
-                    header_btn.styles.width = "100%"
-                    header_btn.styles.content_align = ("left", "middle")
-                    yield header_btn
+                # Group title as a static label
+                group_title = Label(group_label, id="hdr-" + group_id, classes="group-title")
+                yield group_title
                 
-                    # Group items container
-                    with Container(classes="group-items", id="items-" + group_id) as items_container:
-                        # Only show items if group is expanded
-                        if self.group_expanded.get(group_id, True):
+                # Immediately render the item checkboxes for the group (always visible)
                             for item_id, item_label in items:
                                 module = self.modules.get(item_id, ModuleItem(item_id, item_label, ""))
-                                safe_id = makeWidgetId(item_id)
-                                WIDGET_ID_TO_MODULE_ID[safe_id] = item_id
-                                
-                                # Handle partial state in label for parent items
-                                label_to_show = item_label
-                                if module.children and module.partial:
-                                    label_to_show = "[-] " + item_label
-                                
-                                checkbox = buildCheckbox(
-                                    label=label_to_show,
-                                    value=module.checked,
-                                    enabled=module.enabled,
-                                    widget_id=safe_id,
-                                )
-                                self.checkboxes[item_id] = checkbox
-                                yield checkbox
-                        else:
-                            # Group is collapsed, hide items
-                            items_container.display = False
+                    safe_id = makeWidgetId(item_id)
+                    WIDGET_ID_TO_MODULE_ID[safe_id] = item_id
+                    
+                    # Handle partial state in label for parent items
+                    label_to_show = item_label
+                    if module.children and module.partial:
+                        label_to_show = "[-] " + item_label
+                    
+                    cb = Checkbox(label=label_to_show, value=module.checked, id=safe_id, classes="module-checkbox")
+                    cb.disabled = not module.enabled
+                    cb.styles.height = "auto"
+                    cb.styles.min_height = 1
+                    cb.styles.margin = 0
+                    cb.styles.padding = (0, 1, 0, 3)  # Extra left padding for indentation
+                    cb.styles.content_align = ("left", "middle")
+                    
+                    self.checkboxes[item_id] = cb
+                    yield cb
     
     def updateTriState(self, module_id: str) -> None:
         """Update tri-state logic for parent/child relationships"""
@@ -213,33 +195,6 @@ class ModuleTree(Widget):
             self.checked = checked
             super().__init__()
     
-    @on(Button.Pressed)
-    def onGroupHeaderPressed(self, event: Button.Pressed) -> None:
-        """Handle group header button presses"""
-        btn = getattr(event, "button", None) or getattr(event, "control", None) or getattr(event, "sender", None)
-        if btn is None:
-            return
-        header_id = getattr(btn, "id", "") or ""
-        if not header_id.startswith("hdr-"):
-            return
-        group_id = header_id[4:]
-        
-        # Toggle expansion state
-        expanded = self.group_expanded.get(group_id, True)
-        self.group_expanded[group_id] = not expanded
-        
-        # Update button label with new chevron
-        chevron = "▾" if not expanded else "▸"
-        current_label = str(btn.label)
-        if "  " in current_label:
-            group_label = current_label.split("  ", 1)[1]
-        else:
-            group_label = current_label[2:] if len(current_label) > 2 else current_label
-        btn.label = chevron + "  " + group_label
-        
-        # Toggle visibility of items container
-        items_container = self.query_one("#items-" + group_id, Container)
-        items_container.display = not expanded
     
     def setModuleChecked(self, module_id: str, checked: bool) -> None:
         """Set the checked state of a module"""
@@ -311,58 +266,45 @@ class MaintenanceTUI(App):
     
     CSS = """
     Screen {
-        background: $surface;
+        layout: vertical;
     }
     
-    #header {
-        height: 3;
-        background: $primary;
-        color: $text;
-        padding: 1;
-    }
-    
-    #settings-panel {
-        height: 5;
+    #settings-bar, #actions-bar {
+        height: auto;
+        padding: 0 1;
+        content-align: left middle;
+        border: none;
         background: $panel;
-        border: solid $primary;
-        margin: 1;
-        padding: 1;
     }
     
-    #module-container {
+    #settings-bar {
+        border-bottom: solid $primary;
+    }
+    
+    #actions-bar {
+        border-top: solid $primary;
+    }
+    
+    #module-scroll {
         height: 1fr;
-        background: $surface;
-        border: solid $primary;
-        margin: 0 1;
+        padding: 0 1;
     }
     
-    .module-group {
-        margin: 0 1;
-    }
-    
-    .group-header {
+    .group-title {
         height: auto;
         padding: 0 1;
         text-style: bold;
+        color: $accent;
         border: none;
-        background: transparent;
-        color: $primary;
-        content-align: left middle;
-    }
-    
-    .group-header:hover {
-        background: $primary 20%;
-    }
-    
-    .group-items {
-        padding-left: 2;
+        margin-top: 1;
     }
     
     .module-checkbox {
         height: auto;
+        min-height: 1;
         padding: 0 1;
-        content-align: left middle;
         margin: 0;
+        border: none;
     }
     
     .module-checkbox:hover {
@@ -373,36 +315,18 @@ class MaintenanceTUI(App):
         opacity: 50%;
     }
     
-    #module-tree {
-        layout: vertical;
-        padding: 0 1;
-    }
-    
-    #macro-panel {
-        height: 3;
-        background: $panel;
-        border: solid $primary;
-        margin: 0 1 1 1;
-        padding: 1;
-    }
-    
-    #footer-buttons {
-        height: 3;
-        background: $panel;
-        align: center middle;
-        padding: 0 2;
-    }
-    
-    #footer-buttons Button {
+    .bar Button {
         margin: 0 1;
-        min-width: 10;
+    }
+    
+    .primary {
+        text-style: bold;
     }
     
     #status-line {
-        height: 1;
-        background: $surface;
-        color: $text-muted;
+        width: auto;
         padding: 0 2;
+        content-align: right middle;
     }
     """
     
@@ -478,55 +402,69 @@ class MaintenanceTUI(App):
         """Build the UI"""
         yield Header(show_clock=True)
         
-        with Vertical():
-            # Settings panel
-            with Container(id="settings-panel"):
-                with Horizontal():
-                    yield Checkbox("Dry-run", value=True, id="dry-run-check")
-                    yield Checkbox("Create safety checkpoint (Timeshift)", 
-                                 value=False, 
-                                 id="timeshift-check",
-                                 disabled=True)
-            
-            # Module tree
-            yield ModuleTree(self.modules, id="module-tree")
-            
-            # Macro panel
-            with Container(id="macro-panel"):
-                yield Checkbox("Recommended Daily", value=False, id="macro-daily")
-            
-            # Footer buttons
-            with Horizontal(id="footer-buttons"):
-                yield Button("Run", variant="success", id="run-btn")
-                yield Button("Quit", variant="error", id="quit-btn")
-                yield Button("Reset", variant="default", id="reset-btn")
-            
-            # Status line
-            yield Label("0 modules selected", id="status-line")
+        # Settings panel (top)
+        self.cbDryRun = Checkbox(label="Dry-run", value=True, id="set-dry-run")
+        self.cbDryRun.disabled = False
+        
+        self.cbTimeshift = Checkbox(label="Create safety checkpoint (Timeshift)", value=False, id="set-timeshift")
+        self.cbTimeshift.disabled = True  # disabled when dry-run ON
+        
+        # Put them in a thin horizontal bar
+        settings_bar = Horizontal(
+            self.cbDryRun,
+            self.cbTimeshift,
+            id="settings-bar",
+            classes="bar",
+        )
+        yield settings_bar
+        
+        # Module list in a scroll container
+        from textual.containers import VerticalScroll
+        self.moduleScroll = VerticalScroll(id="module-scroll")
+        # We'll mount the module tree into it
+        yield self.moduleScroll
+        
+        # Actions footer (auto height)
+        actions = Horizontal(
+            Button("Run", id="btn-run", classes="primary"),
+            Button("Reset", id="btn-reset"),
+            Button("Quit", id="btn-quit"),
+            Label("0 modules selected", id="status-line"),
+            id="actions-bar",
+            classes="bar",
+        )
+        yield actions
     
     def on_mount(self) -> None:
         """Initialize the app when mounted"""
+        # Mount the module tree into the scroll container
+        module_tree = ModuleTree(self.modules, id="module-tree")
+        self.moduleScroll.mount(module_tree)
         self.updateStatusLine()
     
-    @on(Checkbox.Changed, "#dry-run-check")
-    def handleDryRunChange(self, event: Checkbox.Changed) -> None:
+    @on(Checkbox.Changed, "#set-dry-run")
+    def onDryRunChanged(self, event: Checkbox.Changed) -> None:
         """Handle dry-run checkbox change"""
-        self.dry_run = event.value
+        val = bool(event.value)
+        self.dry_run = val
         
-        # Enable/disable Timeshift based on dry-run
-        timeshift_check = self.query_one("#timeshift-check", Checkbox)
-        timeshift_check.disabled = self.dry_run
+        # Enable/disable timeshift based on dry-run
+        self.cbTimeshift.disabled = val
+        
+        # If dry-run turned ON and timeshift was ON, turn it off
+        if val and self.cbTimeshift.value:
+            self.cbTimeshift.value = False
         
         # Also update the module tree
-        self.modules["sys:timeshift"].enabled = not self.dry_run
+        self.modules["sys:timeshift"].enabled = not val
         
         # Refresh the module tree to update visual state
         module_tree = self.query_one("#module-tree", ModuleTree)
         if "sys:timeshift" in module_tree.checkboxes:
-            module_tree.checkboxes["sys:timeshift"].disabled = self.dry_run
+            module_tree.checkboxes["sys:timeshift"].disabled = val
     
-    @on(Checkbox.Changed, "#timeshift-check")
-    def handleTimeshiftChange(self, event: Checkbox.Changed) -> None:
+    @on(Checkbox.Changed, "#set-timeshift")
+    def onTimeshiftChanged(self, event: Checkbox.Changed) -> None:
         """Handle Timeshift checkbox change"""
         self.create_timeshift = event.value
         self.modules["sys:timeshift"].checked = event.value
@@ -536,57 +474,24 @@ class MaintenanceTUI(App):
         if "sys:timeshift" in module_tree.checkboxes:
             module_tree.checkboxes["sys:timeshift"].value = event.value
     
-    @on(Checkbox.Changed, "#macro-daily")
-    def handleMacroDaily(self, event: Checkbox.Changed) -> None:
-        """Handle Recommended Daily macro"""
-        self.recommended_daily = event.value
-        
-        if event.value:
-            # Apply recommended daily settings
-            # Turn dry-run OFF
-            dry_run_check = self.query_one("#dry-run-check", Checkbox)
-            dry_run_check.value = False
-            
-            # Set Timeshift ON
-            timeshift_check = self.query_one("#timeshift-check", Checkbox)
-            timeshift_check.value = True
-            timeshift_check.disabled = False
-            
-            # Check specific modules
-            daily_modules = [
-                # All Application Management
-                "apps:update_flatpak", "apps:update_snap", "apps:check_brew", 
-                "apps:update_python", "apps:scan_standalone",
-                # Selected others
-                "sys:update_apt", "clean:orphans", "clean:logs", "clean:updatedb"
-            ]
-            
-            module_tree = self.query_one("#module-tree", ModuleTree)
-            for module_id in daily_modules:
-                if module_id in self.modules:
-                    self.modules[module_id].checked = True
-                    if module_id in module_tree.checkboxes:
-                        module_tree.checkboxes[module_id].value = True
-        
-        self.updateStatusLine()
     
     @on(ModuleTree.ModuleChanged)
     def handleModuleChange(self, event: ModuleTree.ModuleChanged) -> None:
         """Handle module selection changes"""
         self.updateStatusLine()
     
-    @on(Button.Pressed, "#run-btn")
-    def handleRun(self, event: Button.Pressed) -> None:
+    @on(Button.Pressed, "#btn-run")
+    def onRun(self, event: Button.Pressed) -> None:
         """Handle run button"""
         self.actionRun()
     
-    @on(Button.Pressed, "#quit-btn")
-    def handleQuit(self, event: Button.Pressed) -> None:
+    @on(Button.Pressed, "#btn-quit")
+    def onQuit(self, event: Button.Pressed) -> None:
         """Handle quit button"""
         self.exit()
     
-    @on(Button.Pressed, "#reset-btn")
-    def handleReset(self, event: Button.Pressed) -> None:
+    @on(Button.Pressed, "#btn-reset")
+    def onReset(self, event: Button.Pressed) -> None:
         """Handle reset button"""
         self.actionReset()
     
@@ -629,9 +534,9 @@ class MaintenanceTUI(App):
     def actionReset(self) -> None:
         """Reset to default state"""
         # Reset settings
-        self.query_one("#dry-run-check", Checkbox).value = True
-        self.query_one("#timeshift-check", Checkbox).value = False
-        self.query_one("#macro-daily", Checkbox).value = False
+        self.cbDryRun.value = True
+        self.cbTimeshift.value = False
+        self.cbTimeshift.disabled = True
         
         # Reset all modules
         module_tree = self.query_one("#module-tree", ModuleTree)
