@@ -52,47 +52,22 @@ class ModuleItem:
     parent: Optional[str] = None
     children: List[str] = field(default_factory=list)
     checked: bool = False
+    partial: bool = False  # For parent items with mixed children states
     expanded: bool = True
     enabled: bool = True
 
 
-class TriStateCheckbox(Checkbox):
-    """Checkbox that supports tri-state (checked, unchecked, partial)"""
-    
-    class Changed(Message):
-        """Message sent when checkbox state changes"""
-        def __init__(self, checkbox: "TriStateCheckbox", value: Optional[bool]) -> None:
-            self.checkbox = checkbox
-            self.value = value
-            super().__init__()
-    
-    partial = reactive(False)
-    
-    def __init__(self, label: str = "", value: bool = False, *, 
-                 id: Optional[str] = None, classes: Optional[str] = None,
-                 disabled: bool = False) -> None:
-        super().__init__(label, value, id=id, classes=classes, disabled=disabled)
-        self.partial = False
-    
-    def renderLabel(self) -> str:
-        """Render checkbox with tri-state support"""
-        if self.partial:
-            return "⧖ " + str(self.label)
-        elif self.value:
-            return "☑ " + str(self.label)
-        else:
-            return "☐ " + str(self.label)
-    
-    def toggle(self) -> None:
-        """Toggle between states"""
-        if not self.disabled:
-            if self.partial:
-                self.value = True
-                self.partial = False
-            else:
-                self.value = not self.value
-                self.partial = False
-            self.post_message(self.Changed(self, self.value))
+def buildCheckbox(label: str, *, value: bool, enabled: bool, widget_id: str, classes: str = "module-checkbox") -> Checkbox:
+    """Build a properly styled checkbox widget"""
+    cb = Checkbox(label=label, value=value, id=widget_id, classes=classes)
+    cb.disabled = not enabled
+    # Don't let it expand to full height/width
+    cb.styles.height = "auto"
+    cb.styles.width = "1fr"
+    cb.styles.margin = (0, 0)
+    cb.styles.padding = (0, 1)
+    cb.styles.content_align = ("left", "middle")
+    return cb
 
 
 class ModuleTree(Widget):
@@ -101,7 +76,7 @@ class ModuleTree(Widget):
     def __init__(self, modules: Dict[str, ModuleItem], **kwargs) -> None:
         super().__init__(**kwargs)
         self.modules = modules
-        self.checkboxes: Dict[str, TriStateCheckbox] = {}
+        self.checkboxes: Dict[str, Checkbox] = {}
         self.selected_module: Optional[str] = None
         self.group_expanded: Dict[str, bool] = {
             "sys": True,
@@ -149,9 +124,13 @@ class ModuleTree(Widget):
                 with Container(classes="module-group") as group_container:
                     # Group header with expand/collapse
                     chevron = "▾" if self.group_expanded.get(group_id, True) else "▸"
-                    yield Static(chevron + " " + group_label, 
-                               classes="group-header", 
-                               id="group-" + group_id)
+                    header_btn = Button(chevron + "  " + group_label, 
+                                      id="hdr-" + group_id, 
+                                      classes="group-header")
+                    header_btn.styles.height = "auto"
+                    header_btn.styles.width = "100%"
+                    header_btn.styles.content_align = ("left", "middle")
+                    yield header_btn
                 
                     # Group items container
                     with Container(classes="group-items", id="items-" + group_id) as items_container:
@@ -161,12 +140,17 @@ class ModuleTree(Widget):
                                 module = self.modules.get(item_id, ModuleItem(item_id, item_label, ""))
                                 safe_id = makeWidgetId(item_id)
                                 WIDGET_ID_TO_MODULE_ID[safe_id] = item_id
-                                checkbox = TriStateCheckbox(
-                                    item_label,
+                                
+                                # Handle partial state in label for parent items
+                                label_to_show = item_label
+                                if module.children and module.partial:
+                                    label_to_show = "[-] " + item_label
+                                
+                                checkbox = buildCheckbox(
+                                    label=label_to_show,
                                     value=module.checked,
-                                    id=safe_id,
-                                    classes="module-checkbox",
-                                    disabled=not module.enabled
+                                    enabled=module.enabled,
+                                    widget_id=safe_id,
                                 )
                                 self.checkboxes[item_id] = checkbox
                                 yield checkbox
@@ -193,17 +177,34 @@ class ModuleTree(Widget):
                     # Partial state
                     pass
     
-    @on(TriStateCheckbox.Changed)
-    def handleCheckboxChange(self, event: TriStateCheckbox.Changed) -> None:
+    @on(Checkbox.Changed)
+    def onCheckboxChanged(self, event: Checkbox.Changed) -> None:
         """Handle checkbox state changes"""
-        widget_id = event.checkbox.id or ""
-        module_id = _getModuleIdFromWidgetId(widget_id)
+        # Be tolerant of Textual versions: sender/control/checkbox
+        cb = getattr(event, "checkbox", None) or getattr(event, "control", None) or getattr(event, "sender", None)
+        if cb is None:
+            return
+        widget_id: str = getattr(cb, "id", "") or ""
+        module_id: str = _getModuleIdFromWidgetId(widget_id)
         if not module_id:
             return  # unknown; safety guard
-        if module_id in self.modules:
-            self.modules[module_id].checked = event.value or False
-            self.updateTriState(module_id)
-            self.post_message(ModuleTree.ModuleChanged(module_id, event.value))
+            
+        new_value: bool = bool(getattr(event, "value", getattr(cb, "value", False)))
+        
+        # Update model for that module_id
+        self.setModuleChecked(module_id, new_value)
+        
+        # If it's a parent, cascade to children
+        if self.isParent(module_id):
+            self.setChildrenChecked(module_id, new_value)
+        
+        # Bubble up tri-state to ancestors (recompute parent partial/checked)
+        self.recomputeTriStateUp(module_id)
+        
+        # Refresh visible labels for parents (add/remove "[-] " prefix)
+        self.refreshParentLabels()
+        
+        self.post_message(ModuleTree.ModuleChanged(module_id, new_value))
     
     class ModuleChanged(Message):
         """Message sent when a module selection changes"""
@@ -212,28 +213,97 @@ class ModuleTree(Widget):
             self.checked = checked
             super().__init__()
     
-    def on_click(self, event) -> None:
-        """Handle clicks on the widget"""
-        # Get the widget that was clicked
-        target = event.widget
+    @on(Button.Pressed)
+    def onGroupHeaderPressed(self, event: Button.Pressed) -> None:
+        """Handle group header button presses"""
+        btn = getattr(event, "button", None) or getattr(event, "control", None) or getattr(event, "sender", None)
+        if btn is None:
+            return
+        header_id = getattr(btn, "id", "") or ""
+        if not header_id.startswith("hdr-"):
+            return
+        group_id = header_id[4:]
         
-        # Check if it's a group header by class
-        if target and "group-header" in target.classes:
-            if target.id and target.id.startswith("group-"):
-                group_id = target.id[6:]  # Remove "group-" prefix
+        # Toggle expansion state
+        expanded = self.group_expanded.get(group_id, True)
+        self.group_expanded[group_id] = not expanded
+        
+        # Update button label with new chevron
+        chevron = "▾" if not expanded else "▸"
+        current_label = str(btn.label)
+        if "  " in current_label:
+            group_label = current_label.split("  ", 1)[1]
+        else:
+            group_label = current_label[2:] if len(current_label) > 2 else current_label
+        btn.label = chevron + "  " + group_label
+        
+        # Toggle visibility of items container
+        items_container = self.query_one("#items-" + group_id, Container)
+        items_container.display = not expanded
+    
+    def setModuleChecked(self, module_id: str, checked: bool) -> None:
+        """Set the checked state of a module"""
+        if module_id in self.modules:
+            self.modules[module_id].checked = checked
+            self.modules[module_id].partial = False
+    
+    def isParent(self, module_id: str) -> bool:
+        """Check if a module is a parent (has children)"""
+        return bool(self.modules.get(module_id, ModuleItem("", "", "")).children)
+    
+    def setChildrenChecked(self, parent_id: str, checked: bool) -> None:
+        """Set all children of a parent to the same checked state"""
+        parent = self.modules.get(parent_id)
+        if parent and parent.children:
+            for child_id in parent.children:
+                if child_id in self.modules:
+                    self.modules[child_id].checked = checked
+                    self.modules[child_id].partial = False
+                    # Update checkbox widget if exists
+                    if child_id in self.checkboxes:
+                        self.checkboxes[child_id].value = checked
+    
+    def recomputeTriStateUp(self, from_id: str) -> None:
+        """Recompute tri-state for parent groups based on children"""
+        # For now, handle group-level tri-state
+        # Find which group this module belongs to
+        group_id = from_id.split(":")[0] if ":" in from_id else None
+        if not group_id:
+            return
+            
+        # Get all children in this group
+        children_ids = [mid for mid in self.modules if mid.startswith(group_id + ":")]
+        if not children_ids:
+            return
+            
+        checked_count = sum(1 for cid in children_ids if self.modules[cid].checked)
+        
+        # Update parent group state (if we track group modules)
+        if group_id in self.modules:
+            if checked_count == 0:
+                self.modules[group_id].checked = False
+                self.modules[group_id].partial = False
+            elif checked_count == len(children_ids):
+                self.modules[group_id].checked = True
+                self.modules[group_id].partial = False
+            else:
+                self.modules[group_id].checked = False
+                self.modules[group_id].partial = True
+    
+    def refreshParentLabels(self) -> None:
+        """Refresh checkbox labels to show partial state"""
+        for module_id, module in self.modules.items():
+            if module_id in self.checkboxes:
+                checkbox = self.checkboxes[module_id]
+                base_label = module.label
                 
-                # Toggle expansion state
-                self.group_expanded[group_id] = not self.group_expanded.get(group_id, True)
-                
-                # Update chevron
-                chevron = "▾" if self.group_expanded[group_id] else "▸"
-                current_text = str(target.renderable) if hasattr(target, 'renderable') else target.render()
-                group_label = current_text.split(" ", 1)[1] if " " in current_text else current_text
-                target.update(chevron + " " + group_label)
-                
-                # Toggle visibility of items container
-                items_container = self.query_one("#items-" + group_id, Container)
-                items_container.display = self.group_expanded[group_id]
+                # Add partial indicator if needed
+                if module.children and module.partial:
+                    checkbox.label = "[-] " + base_label
+                else:
+                    # Remove partial indicator if present
+                    if str(checkbox.label).startswith("[-] "):
+                        checkbox.label = base_label
 
 
 class MaintenanceTUI(App):
@@ -271,9 +341,13 @@ class MaintenanceTUI(App):
     }
     
     .group-header {
-        padding: 1 0;
-        color: $primary;
+        height: auto;
+        padding: 0 1;
         text-style: bold;
+        border: none;
+        background: transparent;
+        color: $primary;
+        content-align: left middle;
     }
     
     .group-header:hover {
@@ -285,9 +359,10 @@ class MaintenanceTUI(App):
     }
     
     .module-checkbox {
-        height: 1;
-        margin: 0;
+        height: auto;
         padding: 0 1;
+        content-align: left middle;
+        margin: 0;
     }
     
     .module-checkbox:hover {
@@ -296,6 +371,11 @@ class MaintenanceTUI(App):
     
     .module-checkbox:disabled {
         opacity: 50%;
+    }
+    
+    #module-tree {
+        layout: vertical;
+        padding: 0 1;
     }
     
     #macro-panel {
