@@ -1,0 +1,45 @@
+# Bash logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+
+# Reports directory (generated output)
+reports/
+!reports/.gitkeep
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Editor cruft
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+env/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Test output
+test-output/
+dry-run-reports/
+
+# System files
+.directory
+*.pid
+*.lock
