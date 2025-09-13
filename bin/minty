@@ -1,0 +1,10 @@
+#!/bin/bash
+# Global command wrapper for minty-maintenance
+
+# Get the real path of this script
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+MINTY_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Execute the main script
+exec "$MINTY_DIR/mint-maintainer.sh" "$@"

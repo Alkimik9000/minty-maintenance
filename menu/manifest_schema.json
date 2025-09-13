@@ -1,0 +1,10 @@
+{
+  "dry_run": true,
+  "create_timeshift": false,
+  "selected": [
+    "sys:update_apt",
+    "apps:update_flatpak",
+    "clean:logs",
+    "health:services"
+  ]
+}

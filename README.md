@@ -18,12 +18,27 @@ A comprehensive system maintenance tool for Linux Mint 22 that keeps your system
 git clone https://github.com/yourusername/minty-maintenance.git
 cd minty-maintenance
 
-# Run full maintenance
-bash mint-maintainer.sh
+# Set up global command (optional)
+./install-global-command.sh
+source ~/.bashrc  # or ~/.zshrc
 
-# Run in test mode (no changes made)
-bash mint-maintainer.sh dry-run
+# Run with interactive TUI (default)
+./mint-maintainer.sh
+# Or globally: run minty
+
+# Run in classic mode (all modules, no interaction)
+./mint-maintainer.sh dry-run
+
+# Run with specific modules (via manifest)
+./mint-maintainer.sh --manifest manifest.json
 ```
+
+### 🖱️ Interactive TUI Features
+- **Mouse support**: Click to select modules, expand/collapse groups
+- **Keyboard navigation**: Arrow keys, Space to toggle, Ctrl+Enter to run
+- **Safe by default**: Dry-run mode enabled initially
+- **Smart grouping**: Modules organized by category
+- **Recommended presets**: One-click daily maintenance selection
 
 ## 📋 What It Does
 

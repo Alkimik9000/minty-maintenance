@@ -21,12 +21,20 @@ import shutil
 class MaintenanceReporter:
     """Handles report generation and management for system maintenance."""
     
-    def __init__(self, report_dir: str = None):
+    def __init__(self, report_dir: str = None, dry_run: bool = None):
         """Initialize reporter with optional report directory."""
-        self.report_dir = report_dir or os.getcwd()
+        self.report_dir = report_dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'reports')
+        self.user_report_dir = os.path.join(os.path.expanduser('~'), 'Documents', 'Reports', 'Minty-Maintenance')
+        os.makedirs(self.user_report_dir, exist_ok=True)
+        self._dry_run = dry_run  # Store dry_run flag if provided
+        
         self.timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         self.report_path = os.path.join(
             self.report_dir, 
+            "system-maintenance-report-" + self.timestamp + ".txt"
+        )
+        self.user_report_path = os.path.join(
+            self.user_report_dir, 
             "system-maintenance-report-" + self.timestamp + ".txt"
         )
         self.chapter_status: Dict[int, str] = {}
@@ -131,6 +139,9 @@ Let's begin! This usually takes 10-30 minutes.
         
         with open(self.report_path, 'w') as f:
             f.write(header_text)
+        
+        with open(self.user_report_path, 'w') as f:
+            f.write(header_text)
     
     def say(self, message: str, is_error: bool = False) -> None:
         """Write message to both console and report."""
@@ -142,6 +153,9 @@ Let's begin! This usually takes 10-30 minutes.
         
         # Report output
         with open(self.report_path, 'a') as f:
+            f.write(full_message + '\n')
+        
+        with open(self.user_report_path, 'a') as f:
             f.write(full_message + '\n')
     
     def writeChapterHeader(self, chapter_num: int, title: str) -> None:
@@ -155,6 +169,9 @@ Let's begin! This usually takes 10-30 minutes.
         
         print(header)
         with open(self.report_path, 'a') as f:
+            f.write(header)
+        
+        with open(self.user_report_path, 'a') as f:
             f.write(header)
     
     def setChapterStatus(self, chapter_num: int, success: bool, notes: str = "") -> None:
@@ -241,6 +258,7 @@ Let's begin! This usually takes 10-30 minutes.
         
         self.say("\n💾 This report has been saved to:")
         self.say("   " + self.report_path)
+        self.say("   " + self.user_report_path)
         
         self.say("\n🗓️ When to run maintenance again:")
         self.say("   • Weekly: For best performance and security")
@@ -252,6 +270,8 @@ Let's begin! This usually takes 10-30 minutes.
     
     def isDryRun(self) -> bool:
         """Check if running in dry-run mode."""
+        if self._dry_run is not None:
+            return self._dry_run
         return len(sys.argv) > 1 and sys.argv[1] == "dry-run"
 
 

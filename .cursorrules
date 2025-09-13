@@ -1,0 +1,86 @@
+# 🍃 minty-maintenance Cursor Rules
+
+## Project Overview
+This is a Linux Mint 22 system maintenance toolkit with an interactive TUI (Terminal User Interface) built with Textual. The project orchestrates various maintenance tasks through a modular Python architecture.
+
+## Code Style & Conventions
+
+### Python Conventions
+- **Functions**: Use camelCase naming (e.g., `openShortPosition`, `updateAptPackages`)
+- **Variables**: Use snake_case naming (e.g., `user_input`, `file_path`)
+- **Classes**: Use PascalCase naming (e.g., `MaintenanceReporter`, `CommandRunner`)
+- **Type Annotations**: ALWAYS include type annotations for all functions, methods, and variables
+- **String Formatting**: NO f-strings! Use string concatenation or `.format()` for Python compatibility
+- **Avoid Overnesting**: Break down complex functions into smaller, well-named helper functions
+- **Class Organization**: Each class should be in its own file and imported as needed
+- **Utilities**: Generic reusable functions go in `scripts/utils/utils.py`
+
+### Project Structure
+```
+minty-maintenance/
+├── menu/                    # TUI components
+│   ├── maintenance_tui.py   # Main interactive interface
+│   └── manifest_schema.json # Schema for selective execution
+├── scripts/                 # Maintenance modules
+│   ├── apps/               # Application management
+│   ├── cleanup/            # System cleanup tasks
+│   ├── health/             # Health checks
+│   ├── system/             # System maintenance
+│   └── utils/              # Shared utilities
+├── mint-maintainer.sh      # Main entry point (bash)
+└── mint-maintainer-modular.py # Python orchestrator
+```
+
+### Key Components
+1. **TUI (maintenance_tui.py)**: 
+   - Mouse-enabled interface with Textual
+   - Tri-state checkboxes for hierarchical selection
+   - Generates JSON manifest for selective execution
+
+2. **Orchestrator (mint-maintainer-modular.py)**:
+   - Reads manifest or runs all modules
+   - Maps module IDs to implementation chapters
+   - Handles dry-run mode
+
+3. **Modules**: Each maintenance task is a separate Python module with:
+   - A main function following pattern: `functionName(reporter: MaintenanceReporter, runner: CommandRunner) -> bool`
+   - Clear error handling and reporting
+   - Dry-run support
+
+### Module ID Mapping
+- `sys:*` - System maintenance tasks
+- `apps:*` - Application management
+- `clean:*` - Cleanup operations
+- `health:*` - Health checks
+
+### Testing & Development
+- Use virtual environment: `.venv/`
+- Test TUI directly: `python3 menu/maintenance_tui.py`
+- Test in dry-run mode by default
+- Check linting before commits
+
+### Important Patterns
+1. **Error Handling**: Always use try-except blocks in module functions
+2. **Reporting**: Use `reporter.say()` for user-friendly output
+3. **Command Execution**: Use `runner.run()` which respects dry-run mode
+4. **Status Updates**: Update chapter status with `reporter.setChapterStatus()`
+
+### Do NOT:
+- Create documentation files unless explicitly requested
+- Use f-strings (breaks compatibility)
+- Create deeply nested functions
+- Mix concerns (keep modules focused)
+- Modify Timeshift internal logic
+
+### DO:
+- Follow existing patterns in the codebase
+- Keep user messages friendly and informative
+- Test changes in dry-run mode first
+- Update type annotations
+- Break complex logic into helper functions
+- **COMMIT FREQUENTLY**: Make git commits after each logical change with descriptive messages
+  - Commit after adding new features
+  - Commit after fixing bugs
+  - Commit after refactoring
+  - Use clear, descriptive commit messages (e.g., "Add interactive TUI with mouse support", "Fix module mounting issue in Textual")
+  - Don't accumulate too many changes in one commit

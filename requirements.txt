@@ -1,0 +1,4 @@
+# 🍃 minty-maintenance dependencies
+
+# TUI Framework
+textual==0.79.1
