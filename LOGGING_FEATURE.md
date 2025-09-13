@@ -6,7 +6,7 @@ This feature adds comprehensive logging and live progress tracking to minty-main
 ## Key Components
 
 ### 1. Bash Runner (`mint-maintainer-runner.sh`)
-- Creates timestamped log directories in `~/.local/state/minty-maintenance/<RUN_ID>/`
+- Creates timestamped log directories in `./logs/<RUN_ID>/` (project directory for testing)
 - Implements tee strategy for capturing all output
 - Emits structured markers (`::BEGIN` and `::END`) for module tracking
 - Generates audit.jsonl for machine-readable events
@@ -27,7 +27,7 @@ This feature adds comprehensive logging and live progress tracking to minty-main
 
 ## Log Structure
 ```
-~/.local/state/minty-maintenance/
+./logs/                          # In project directory for testing
 └── <RUN_ID>/
     ├── run.log              # Master log with all output
     ├── audit.jsonl          # Structured event log

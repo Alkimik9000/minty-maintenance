@@ -9,7 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.venv"
 
 # Logging configuration
-LOG_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/minty-maintenance"
+# For testing, use project directory. For production, use: "${XDG_STATE_HOME:-$HOME/.local/state}/minty-maintenance"
+LOG_ROOT="$SCRIPT_DIR/logs"
 RUN_ID="$(date +%Y%m%d-%H%M%S)"
 RUN_DIR="$LOG_ROOT/$RUN_ID"
 

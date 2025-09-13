@@ -9,6 +9,10 @@
 reports/
 !reports/.gitkeep
 
+# Logs directory (generated output)
+logs/
+!logs/.gitkeep
+
 # Environment files
 .env
 .env.local
