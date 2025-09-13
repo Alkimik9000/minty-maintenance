@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+    
+    - name: Lint Bash scripts
+      run: |
+        shellcheck mint-maintainer.sh
+    
+    - name: Check Python syntax
+      run: |
+        python3 -m py_compile scripts/**/*.py
+    
+    - name: Test dry-run mode
+      run: |
+        bash mint-maintainer.sh dry-run 2>&1 | head -100
+
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    
+    - name: Run tests in dry-run mode
+      run: |
+        make test
