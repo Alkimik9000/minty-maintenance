@@ -1,140 +1,128 @@
-## 🍃 minty-maintenance
+# 🖥️ Mint Maintenance Script
 
-![Bash](https://img.shields.io/badge/Bash-4EAA25?logo=gnu-bash&logoColor=white)
-![Linux Mint](https://img.shields.io/badge/Linux%20Mint-87CF3E?logo=linuxmint&logoColor=white)
-![Ubuntu Base](https://img.shields.io/badge/Ubuntu%2024.04%20base-E95420?logo=ubuntu&logoColor=white)
-[![Contribute](https://img.shields.io/badge/Contribute-Welcome-brightgreen.svg)](https://github.com/Alikimik9000/minty-maintenance/blob/main/CONTRIBUTING.md)
-![Made with ❤️](https://img.shields.io/badge/Made%20with-%E2%9D%A4-red)
+A comprehensive system maintenance tool for Linux Mint 22 that keeps your system clean, updated, and running smoothly.
 
-A Bash script that keeps my Linux Mint 22 setup updated, tidy, and healthy - and writes a friendly, plain‑English report every time it runs. It’s practical, transparent, and a little fun.
+## ✨ Features
 
-### Why I built this
-- **Peace of mind**: I wanted updates that explain themselves.
-- **Trustworthy automation**: Each chapter checks first, narrates actions, and errs on the side of safety.
-- **Time-saver**: One command, a full system pass, and a clean summary at the end.
+- **System Updates**: APT packages, security patches, and kernel management
+- **Application Updates**: Flatpak, Snap, Homebrew, and Python tools
+- **Cleanup Operations**: Logs, caches, Docker containers, orphaned packages
+- **Health Monitoring**: Disk health, system services, GPU status
+- **Space Recovery**: Typically frees 5-30GB through intelligent cleanup
+- **User-Friendly Reports**: Clear explanations of every action taken
 
-### What it solves for me
-- **Predictability**: I can dry‑run to preview actions and impact.
-- **Safety**: The most recent Timeshift snapshot is annotated as the last one before maintenance begins.
-- **Clarity**: A single TXT report tells me what changed and how much space moved.
--  **Space savings**: Reclaims significant disk space, like the 27GB freed in one run, keeping my system lean and efficient.
+## 🚀 Quick Start
 
-### What I learned (and care about)
-- Build automation that I personally need.
-- Safety nets (snapshots, checks, gates) build confidence.
-- Small tools, big leverage: clear UX makes infra feel effortless.
-
----
-
-### Key features
-- **Safety-first flow** where every chapter checks state and handles errors gracefully.
-- **Timeshift annotation**: marks the latest snapshot as the pre‑maintenance checkpoint.
-- **Dry‑run mode** to preview changes and space impact before committing.
-- **Space tracking** per step and overall, with a final summary.
-
----
-
-### Table of Contents (Chapters)
-
-1) Create a Safety Checkpoint (Timeshift)
-2) Updating Command‑Line Tools (Homebrew)
-3) Updating Your Core System Software (APT)
-4) Checking for Package Issues
-5) Updating Desktop Applications (Flatpak)
-6) Updating Snap Applications
-7) Updating Python Tools
-8) Checking Standalone Applications (AppImage)
-9) Checking Device Firmware Updates
-10) Cleaning Up System Log Files
-11) Removing Old System Kernels
-12) Checking Hard Drive Health
-13) Updating Desktop Extensions (GNOME)
-14) Cleaning Up Docker Containers
-15) Refreshing File Search Database
-16) Deep Cleaning Temporary Files (BleachBit)
-17) Optimizing SSD Performance (fstrim)
-18) Checking Overall System Health
-19) Checking Graphics Card (NVIDIA)
-20) Verifying Automatic Security Updates
-21) Final Summary
-
-Every chapter runs with safety in mind and logs clearly to the TXT report.
-
----
-
-### Usage
 ```bash
-# Full maintenance run
-bash minty_maintanance.sh
+# Clone the repository
+git clone https://github.com/yourusername/minty-maintenance.git
+cd minty-maintenance
 
-# Dry‑run (no changes) — preview what would happen and current state
-bash minty_maintanance.sh dry-run
+# Run full maintenance
+bash mint-maintainer.sh
+
+# Run in test mode (no changes made)
+bash mint-maintainer.sh dry-run
 ```
 
----
+## 📋 What It Does
 
-### Example: Chapter 10 looks like this in the report
-Short context, action, result — with space impact where relevant:
+The script performs 20+ maintenance tasks organized into categories:
 
-```text
-------------------------------------------------------------------------
-Chapter 10: Cleaning Up System Log Files
-------------------------------------------------------------------------
-📚 Your system keeps detailed logs of everything it does. Over time,
-these can take up quite a bit of space.
+### 🔧 System Maintenance
+- Creates safety checkpoint (Timeshift)
+- Updates core system packages (APT)
+- Manages old kernels
+- Updates device firmware
+- Optimizes SSD performance
 
-🔧 Now I'm going to: clean up old system logs (keep 2 weeks)
-Current log storage: 470.6M
-   ✅ Done! Everything completed successfully.
-Log storage after cleanup: 362.4M
+### 📱 Application Management  
+- Updates Flatpak applications
+- Updates Snap packages
+- Checks Homebrew tools
+- Updates Python packages
+- Identifies standalone apps needing manual updates
+
+### 🧹 Cleanup Operations
+- Removes orphaned packages
+- Cleans system logs
+- Cleans Docker containers and images
+- Performs deep clean with BleachBit
+- Updates file search database
+
+### 🏥 Health Checks
+- Monitors disk health
+- Checks system services
+- Verifies GPU status
+- Confirms automatic updates are enabled
+
+## 📊 Sample Output
+
+A typical run might free up significant space:
+
 ```
-
----
-### Final Summary at the end
-
-```text
-------------------------------------------------------------
-Chapter 21 — Maintenance Complete!
-------------------------------------------------------------
-
-
-🎉 All done! Here's what happened today:
-
-
-Task                           | Status               | Notes                         
------------------------------- | -------------------- | ------------------------------
-Safety Checkpoint              | ⚠️ Needs Attention   | No data                       
-Homebrew Tools                 | ✅ Success           | Not installed (optional)      
-System Updates                 | ⚠️ Needs Attention   | Updated successfully          
-Package Cleanup                | ✅ Success           | Cleaned 22 orphans            
-Flatpak Apps                   | ✅ Success           | 9 apps updated                
-Snap Apps                      | ✅ Success           | Updated & cleaned old versions
-Python Tools                   | ✅ Success           | Pipx apps checked             
-AppImage Check                 | ✅ Success           | Found 6 AppImages, 8 /opt apps
-Firmware Updates               | ⚠️ Needs Attention   | Updates installed - restart needed
-Log Cleanup                    | ✅ Success           | Cleaned to 362.4M             
-Kernel Cleanup                 | ⚠️ Needs Attention   | Cleaned old kernels           
-Disk Health                    | ✅ Success           | All drives healthy            
-GNOME Extensions               | ⚠️ Needs Attention   | 8 extensions updated          
-Docker Cleanup                 | ✅ Success           | No data                       
-Search Database                | ⚠️ Needs Attention   | Installed and initialized     
-Deep Clean                     | ✅ Success           | Deep cleaned                  
-SSD Optimization               | ⚠️ Needs Attention   | SSDs optimized                
-System Health                  | ⚠️ Needs Attention   | Some service issues           
-Graphics Card                  | ✅ Success           | GPU healthy, driver 550.163.01
-Auto Updates                   | ⚠️ Needs Attention   | Not installed                 
-
 📊 Space Summary:
-   🎉 Freed up approximately 27648MB!
-   Available space: 529G
-Script encountered an error but continuing to summary...
+   🎉 Freed up approximately 27,263MB!
+   Available space: 142G
 
 📋 Overall Assessment:
-   ⚠️ Several items need your attention.
-   Review the orange items above for details.
-
-💾 This report has been saved
+   🌟 Your system is in excellent shape!
+   All maintenance tasks completed successfully.
 ```
 
----
+See [REPORT_SAMPLE.md](REPORT_SAMPLE.md) for a complete example.
 
+## 🏗️ Architecture
+
+The project uses a modular Python architecture:
+
+```
+minty-maintenance/
+├── mint-maintainer.sh          # Main entry point (bash wrapper)
+├── mint-maintainer-modular.py  # Python orchestrator
+├── scripts/
+│   ├── system/                 # System updates and maintenance
+│   ├── apps/                   # Application updates
+│   ├── cleanup/                # Cleanup operations
+│   ├── health/                 # Health checks
+│   └── utils/                  # Common utilities
+└── reports/                    # Generated maintenance reports
+```
+
+## 🛠️ Requirements
+
+- Linux Mint 22 (or Ubuntu 24.04 base)
+- Python 3.x
+- Administrator (sudo) access
+- ~30 minutes for full maintenance
+
+## 📖 Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+- [RULES.md](RULES.md) - Development guidelines
+- [MIGRATIONS.md](MIGRATIONS.md) - Upgrade instructions
+- [REPORT_SAMPLE.md](REPORT_SAMPLE.md) - Example output
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Follow the coding standards in [RULES.md](RULES.md)
+2. Use conventional commits
+3. Test in dry-run mode first
+4. Update documentation as needed
+
+## ⚠️ Safety
+
+- Always backs up current state before making changes
+- Dry-run mode available for testing
+- Detailed logging of all operations
+- Safe defaults for all cleanup operations
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+Built for the Linux Mint community to make system maintenance accessible to everyone.
