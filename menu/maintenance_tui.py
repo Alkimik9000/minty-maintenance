@@ -8,19 +8,24 @@ import json
 import re
 import subprocess
 import tempfile
+import asyncio
+import datetime
+import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 
-from textual import on
+from textual import on, work
 from textual.events import Click
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
+from textual.containers import Container, Horizontal, Vertical, ScrollableContainer, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Checkbox, Header, Label, Static
+from textual.widgets import Button, Checkbox, Header, Label, Static, ProgressBar, RichLog, Footer
 from textual.message import Message
+from textual.screen import Screen
+from textual.timer import Timer
 
 
 # Sanitization for Textual widget IDs (which cannot contain colons)
@@ -261,6 +266,207 @@ class ModuleTree(Widget):
                         checkbox.label = base_label
 
 
+class RunView(Screen):
+    """Screen for showing live maintenance run progress"""
+    
+    def __init__(self, manifest_path: str, dry_run: bool, selected_count: int) -> None:
+        super().__init__()
+        self.manifest_path = manifest_path
+        self.dry_run = dry_run
+        self.selected_count = selected_count
+        self.current_module = ""
+        self.completed_modules = 0
+        self.failed_modules = 0
+        self.process: Optional[asyncio.subprocess.Process] = None
+        self.log_dir = ""
+        self.run_id = ""
+        self.start_time = datetime.datetime.now()
+        self.elapsed_timer: Optional[Timer] = None
+        
+    def compose(self) -> ComposeResult:
+        """Build the run view UI"""
+        yield Header(show_clock=True)
+        
+        # Progress section
+        with Container(id="progress-container"):
+            yield Label("Minty Maintenance — Running...", id="run-title")
+            yield Label("Initializing...", id="current-module")
+            yield ProgressBar(total=self.selected_count, id="progress-bar")
+            yield Label("Elapsed: 00:00", id="elapsed-time")
+        
+        # Log viewer
+        yield RichLog(highlight=True, markup=True, wrap=True, id="log-viewer")
+        
+        # Footer with controls
+        with Container(id="footer-controls"):
+            yield Button("Stop", id="btn-stop", variant="error")
+            yield Button("View Logs", id="btn-view-logs", disabled=True)
+            yield Button("Back to Menu", id="btn-back", disabled=True)
+        
+        yield Footer()
+    
+    def on_mount(self) -> None:
+        """Start the maintenance run when mounted"""
+        self.elapsed_timer = self.set_interval(1.0, self.updateElapsedTime)
+        self.runMaintenance()
+    
+    def updateElapsedTime(self) -> None:
+        """Update the elapsed time display"""
+        elapsed = datetime.datetime.now() - self.start_time
+        minutes = int(elapsed.total_seconds() // 60)
+        seconds = int(elapsed.total_seconds() % 60)
+        elapsed_label = self.query_one("#elapsed-time", Label)
+        elapsed_label.update("Elapsed: " + str(minutes).zfill(2) + ":" + str(seconds).zfill(2))
+    
+    @work(thread=False)
+    async def runMaintenance(self) -> None:
+        """Run the maintenance script asynchronously"""
+        log_viewer = self.query_one("#log-viewer", RichLog)
+        progress_bar = self.query_one("#progress-bar", ProgressBar)
+        
+        # Get script path
+        script_path = Path(__file__).parent.parent / "mint-maintainer-runner.sh"
+        if not script_path.exists():
+            log_viewer.write("[red]Error: mint-maintainer-runner.sh not found[/red]")
+            self.onComplete(success=False)
+            return
+        
+        # Prepare environment
+        env = os.environ.copy()
+        env["MINTY_TEE"] = "1"
+        
+        # Generate run ID (will be overridden by the script, but good to have)
+        self.run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        
+        try:
+            # Start the process
+            self.process = await asyncio.create_subprocess_exec(
+                "bash", str(script_path), "--manifest", self.manifest_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+                env=env
+            )
+            
+            # Stream output line by line
+            while True:
+                if not self.process.stdout:
+                    break
+                    
+                line_bytes = await self.process.stdout.readline()
+                if not line_bytes:
+                    break
+                
+                line = line_bytes.decode('utf-8', errors='replace').rstrip()
+                
+                # Parse structured markers
+                if line.startswith("::BEGIN module="):
+                    # Extract module ID
+                    parts = line.split()
+                    for part in parts:
+                        if part.startswith("module="):
+                            module_id = part.split("=", 1)[1]
+                            self.current_module = module_id
+                            module_label = self.query_one("#current-module", Label)
+                            module_label.update("Module " + str(self.completed_modules + 1) + "/" + 
+                                              str(self.selected_count) + ": " + module_id)
+                            log_viewer.write("[dim]" + line + "[/dim]")
+                            break
+                elif line.startswith("::END module="):
+                    # Extract module ID and return code
+                    parts = line.split()
+                    rc = 0
+                    for part in parts:
+                        if part.startswith("rc="):
+                            rc = int(part.split("=", 1)[1])
+                            break
+                    
+                    self.completed_modules += 1
+                    if rc != 0:
+                        self.failed_modules += 1
+                        log_viewer.write("[red]" + line + "[/red]")
+                    else:
+                        log_viewer.write("[green]" + line + "[/green]")
+                    
+                    progress_bar.update(progress=self.completed_modules)
+                elif line.startswith("Log directory: "):
+                    # Extract log directory
+                    self.log_dir = line.split(": ", 1)[1].strip()
+                    log_viewer.write("[blue]" + line + "[/blue]")
+                else:
+                    # Regular output
+                    log_viewer.write(line)
+            
+            # Wait for process to complete
+            await self.process.wait()
+            
+            # Handle completion
+            success = self.process.returncode == 0
+            self.onComplete(success=success)
+            
+        except Exception as e:
+            log_viewer.write("[red]Error: " + str(e) + "[/red]")
+            self.onComplete(success=False)
+    
+    def onComplete(self, success: bool) -> None:
+        """Handle completion of the run"""
+        if self.elapsed_timer:
+            self.elapsed_timer.stop()
+        
+        # Update UI
+        title_label = self.query_one("#run-title", Label)
+        title_label.update("Minty Maintenance — Complete" if success else "Minty Maintenance — Failed")
+        
+        current_label = self.query_one("#current-module", Label)
+        current_label.update("Completed: " + str(self.completed_modules) + " modules, " + 
+                           str(self.failed_modules) + " failed")
+        
+        # Enable buttons
+        self.query_one("#btn-stop", Button).disabled = True
+        self.query_one("#btn-view-logs", Button).disabled = False
+        self.query_one("#btn-back", Button).disabled = False
+        
+        log_viewer = self.query_one("#log-viewer", RichLog)
+        log_viewer.write("")
+        log_viewer.write("=" * 60)
+        log_viewer.write("[bold]Run Summary:[/bold]")
+        log_viewer.write("- Total modules: " + str(self.selected_count))
+        log_viewer.write("- Completed: " + str(self.completed_modules))
+        log_viewer.write("- Failed: " + str(self.failed_modules))
+        if self.log_dir:
+            log_viewer.write("- Logs saved to: " + self.log_dir)
+    
+    @on(Button.Pressed, "#btn-stop")
+    async def onStop(self, event: Button.Pressed) -> None:
+        """Handle stop button"""
+        if self.process and self.process.returncode is None:
+            self.process.terminate()
+            await asyncio.sleep(0.5)
+            if self.process.returncode is None:
+                self.process.kill()
+            
+            log_viewer = self.query_one("#log-viewer", RichLog)
+            log_viewer.write("[yellow]Run cancelled by user[/yellow]")
+    
+    @on(Button.Pressed, "#btn-view-logs")
+    def onViewLogs(self, event: Button.Pressed) -> None:
+        """Handle view logs button"""
+        if self.log_dir:
+            log_viewer = self.query_one("#log-viewer", RichLog)
+            log_viewer.write("")
+            log_viewer.write("[bold]Log Files:[/bold]")
+            log_viewer.write("- Master log: " + self.log_dir + "/run.log")
+            log_viewer.write("- Audit log: " + self.log_dir + "/audit.jsonl")
+            log_viewer.write("- Module logs: " + self.log_dir + "/modules/")
+            log_viewer.write("- Report: " + self.log_dir + "/report.txt")
+            log_viewer.write("")
+            log_viewer.write("[dim]Copy path to view in file manager[/dim]")
+    
+    @on(Button.Pressed, "#btn-back")
+    def onBack(self, event: Button.Pressed) -> None:
+        """Return to main menu"""
+        self.app.pop_screen()
+
+
 class MaintenanceTUI(App):
     """Main TUI application for minty-maintenance"""
     
@@ -327,6 +533,50 @@ class MaintenanceTUI(App):
         width: auto;
         padding: 0 2;
         content-align: right middle;
+    }
+    
+    /* RunView styles */
+    #progress-container {
+        height: auto;
+        padding: 1;
+        background: $panel;
+        border-bottom: solid $primary;
+    }
+    
+    #run-title {
+        text-style: bold;
+        text-align: center;
+    }
+    
+    #current-module {
+        margin-top: 1;
+    }
+    
+    #progress-bar {
+        margin-top: 1;
+    }
+    
+    #elapsed-time {
+        text-align: right;
+        color: $text-muted;
+    }
+    
+    #log-viewer {
+        margin: 1;
+        padding: 1;
+        border: solid $primary;
+    }
+    
+    #footer-controls {
+        height: auto;
+        layout: horizontal;
+        padding: 1;
+        background: $panel;
+        border-top: solid $primary;
+    }
+    
+    #footer-controls Button {
+        margin: 0 1;
     }
     """
     
@@ -528,8 +778,14 @@ class MaintenanceTUI(App):
             json.dump(manifest, f, indent=2)
             manifest_path = f.name
         
-        # Exit TUI and run the bash script
-        self.exit(result=manifest_path)
+        # Calculate total modules to run
+        selected_count = len(selected)
+        if self.create_timeshift:
+            selected_count += 1
+        
+        # Push the RunView screen instead of exiting
+        run_view = RunView(manifest_path, self.dry_run, selected_count)
+        self.push_screen(run_view)
     
     def actionReset(self) -> None:
         """Reset to default state"""
@@ -568,16 +824,7 @@ class MaintenanceTUI(App):
 def main() -> None:
     """Main entry point"""
     app = MaintenanceTUI()
-    manifest_path = app.run()
-    
-    if manifest_path:
-        # Run the bash script with the manifest
-        script_path = Path(__file__).parent.parent / "mint-maintainer.sh"
-        if script_path.exists():
-            cmd = ["bash", str(script_path), "--manifest", manifest_path]
-            subprocess.run(cmd)
-        else:
-            print("Error: mint-maintainer.sh not found at:", script_path)
+    app.run()
 
 
 if __name__ == "__main__":

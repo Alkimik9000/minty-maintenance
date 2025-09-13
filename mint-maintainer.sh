@@ -36,8 +36,8 @@ fi
 
 # Check if running with --manifest option
 if [[ $# -eq 2 && "$1" == "--manifest" ]]; then
-    # Run the modular script with manifest
-    exec "$PYTHON" "$SCRIPT_DIR/mint-maintainer-modular.py" "$@"
+    # Run the runner script with manifest for logging support
+    exec bash "$SCRIPT_DIR/mint-maintainer-runner.sh" "$@"
 elif [[ $# -eq 0 || "$1" == "dry-run" ]]; then
     # Check if textual is installed
     if "$PYTHON" -c "import textual" 2>/dev/null; then

@@ -14,6 +14,7 @@ import os
 import json
 import argparse
 import importlib.util
+import subprocess
 from typing import Dict, Optional
 
 # Add scripts directory to path
@@ -203,6 +204,22 @@ class MaintenanceOrchestrator:
     
     def runChapter(self, chapter_num: int, chapter_info: Dict) -> bool:
         """Run a single chapter."""
+        module_id = chapter_info.get('module_id', 'unknown')
+        success = False
+        
+        # Emit begin marker
+        print("::BEGIN module=" + module_id + " ts=" + 
+              subprocess.check_output(['date', '-Iseconds']).decode().strip())
+        sys.stdout.flush()
+        
+        # If running with logging, also set up module-specific log
+        log_dir = os.environ.get('MINTY_LOG_DIR', '')
+        module_log_path = ""
+        if log_dir and os.path.exists(log_dir + "/modules"):
+            # Sanitize module ID for filename
+            safe_module_id = module_id.replace(':', '-')
+            module_log_path = log_dir + "/modules/" + safe_module_id + ".log"
+        
         try:
             # Check if module file exists
             module_path = chapter_info['module'].replace('.', '/') + '.py'
@@ -210,21 +227,71 @@ class MaintenanceOrchestrator:
                 self.reporter.say("Chapter " + str(chapter_num) + " (" + 
                                 chapter_info['name'] + ") not yet implemented")
                 self.reporter.setChapterStatus(chapter_num, True, "Not implemented")
-                return True
-            
-            # Import module dynamically
-            module = importlib.import_module(chapter_info['module'])
-            function = getattr(module, chapter_info['function'])
-            
-            # Run the chapter function
-            success = function(self.reporter, self.runner)
-            return success
-            
+                success = True
+            else:
+                # Import module dynamically
+                module = importlib.import_module(chapter_info['module'])
+                function = getattr(module, chapter_info['function'])
+                
+                # If we have a module log path, create a subprocess to tee output
+                if module_log_path and os.environ.get('MINTY_TEE'):
+                    # Save current stdout/stderr
+                    old_stdout = sys.stdout
+                    old_stderr = sys.stderr
+                    
+                    # Create tee process for module logging
+                    tee_proc = subprocess.Popen(
+                        ['tee', '-a', module_log_path],
+                        stdin=subprocess.PIPE,
+                        stdout=old_stdout,
+                        stderr=old_stderr,
+                        text=True
+                    )
+                    
+                    # Redirect stdout/stderr to tee
+                    sys.stdout = tee_proc.stdin
+                    sys.stderr = tee_proc.stdin
+                    
+                    try:
+                        # Run the chapter function
+                        success = function(self.reporter, self.runner)
+                    finally:
+                        # Restore stdout/stderr
+                        sys.stdout = old_stdout
+                        sys.stderr = old_stderr
+                        tee_proc.stdin.close()
+                        tee_proc.wait()
+                else:
+                    # Run normally without module logging
+                    success = function(self.reporter, self.runner)
+                    
         except Exception as e:
             self.reporter.say("Error running chapter " + str(chapter_num) + 
                             ": " + str(e), is_error=True)
             self.reporter.setChapterStatus(chapter_num, False, "Error: " + str(e)[:30])
-            return False
+            success = False
+        
+        # Emit end marker
+        exit_code = 0 if success else 1
+        print("::END module=" + module_id + " ts=" + 
+              subprocess.check_output(['date', '-Iseconds']).decode().strip() + 
+              " rc=" + str(exit_code))
+        sys.stdout.flush()
+        
+        # Write audit log entry if enabled
+        audit_log = os.environ.get('MINTY_LOG_DIR', '') + "/audit.jsonl"
+        if os.path.exists(os.path.dirname(audit_log)):
+            with open(audit_log, 'a') as f:
+                timestamp = subprocess.check_output(['date', '-Iseconds']).decode().strip()
+                audit_entry = {
+                    "type": "module",
+                    "id": module_id,
+                    "rc": exit_code,
+                    "ts": timestamp
+                }
+                f.write(json.dumps(audit_entry) + "\n")
+        
+        return success
     
     def run(self) -> None:
         """Run all maintenance tasks."""

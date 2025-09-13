@@ -44,3 +44,7 @@ dry-run-reports/
 .directory
 *.pid
 *.lock
+.cursorignore
+.cursorrules
+CURSOR_CONTEXT.md
+CURSOR_PATTERNS.md
