@@ -5,6 +5,7 @@ Mouse-friendly, colorful maintenance module selector with tri-state checkboxes
 """
 
 import json
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -20,6 +21,26 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Header, Label, Static
 from textual.message import Message
+
+
+# Sanitization for Textual widget IDs (which cannot contain colons)
+_ID_SAFE = re.compile(r"[^A-Za-z0-9_-]")
+
+def makeWidgetId(module_id: str) -> str:
+    """Convert module ID to valid Textual widget ID"""
+    # Replace any disallowed chars (like ':') with '-'
+    safe: str = _ID_SAFE.sub("-", module_id)
+    # Ensure it doesn't begin with a digit
+    if safe and safe[0].isdigit():
+        safe = "_" + safe
+    return "cb-" + safe
+
+# Global map: widget id -> original module id (with colon)
+WIDGET_ID_TO_MODULE_ID: Dict[str, str] = {}
+
+def _getModuleIdFromWidgetId(widget_id: str) -> str:
+    """Get original module ID from sanitized widget ID"""
+    return WIDGET_ID_TO_MODULE_ID.get(widget_id, "")
 
 
 @dataclass
@@ -138,10 +159,12 @@ class ModuleTree(Widget):
                         if self.group_expanded.get(group_id, True):
                             for item_id, item_label in items:
                                 module = self.modules.get(item_id, ModuleItem(item_id, item_label, ""))
+                                safe_id = makeWidgetId(item_id)
+                                WIDGET_ID_TO_MODULE_ID[safe_id] = item_id
                                 checkbox = TriStateCheckbox(
                                     item_label,
                                     value=module.checked,
-                                    id="cb-" + item_id,
+                                    id=safe_id,
                                     classes="module-checkbox",
                                     disabled=not module.enabled
                                 )
@@ -173,13 +196,14 @@ class ModuleTree(Widget):
     @on(TriStateCheckbox.Changed)
     def handleCheckboxChange(self, event: TriStateCheckbox.Changed) -> None:
         """Handle checkbox state changes"""
-        checkbox_id = event.checkbox.id
-        if checkbox_id and checkbox_id.startswith("cb-"):
-            module_id = checkbox_id[3:]  # Remove "cb-" prefix
-            if module_id in self.modules:
-                self.modules[module_id].checked = event.value or False
-                self.updateTriState(module_id)
-                self.post_message(ModuleTree.ModuleChanged(module_id, event.value))
+        widget_id = event.checkbox.id or ""
+        module_id = _getModuleIdFromWidgetId(widget_id)
+        if not module_id:
+            return  # unknown; safety guard
+        if module_id in self.modules:
+            self.modules[module_id].checked = event.value or False
+            self.updateTriState(module_id)
+            self.post_message(ModuleTree.ModuleChanged(module_id, event.value))
     
     class ModuleChanged(Message):
         """Message sent when a module selection changes"""
