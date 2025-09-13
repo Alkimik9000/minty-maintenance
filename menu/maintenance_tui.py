@@ -119,8 +119,8 @@ class ModuleTree(Widget):
                 yield group_title
                 
                 # Immediately render the item checkboxes for the group (always visible)
-                            for item_id, item_label in items:
-                                module = self.modules.get(item_id, ModuleItem(item_id, item_label, ""))
+                for item_id, item_label in items:
+                    module = self.modules.get(item_id, ModuleItem(item_id, item_label, ""))
                     safe_id = makeWidgetId(item_id)
                     WIDGET_ID_TO_MODULE_ID[safe_id] = item_id
                     
