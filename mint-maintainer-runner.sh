@@ -93,10 +93,13 @@ run_orchestrator() {
     if [[ -n "${MINTY_TEE:-}" ]]; then
         # Ensure master log file exists
         touch "$MASTER_LOG"
+        echo "[DEBUG] Master log created at: $MASTER_LOG" >&2
         
         # Redirect both stdout and stderr through tee to master log
-        exec > >(stdbuf -oL -eL tee -a "$MASTER_LOG")
+        exec 3>&1 4>&2  # Save original stdout/stderr
+        exec > >(stdbuf -oL -eL tee -a "$MASTER_LOG" >&3)
         exec 2>&1
+        echo "[DEBUG] Tee redirection set up"
     fi
     
     echo "=== Minty Maintenance Run: $RUN_ID ==="
@@ -141,5 +144,14 @@ echo ""
 echo "=== Run Complete ==="
 echo "Exit code: $EXIT_CODE"
 echo "Logs saved to: $RUN_DIR"
+
+# Ensure all output is flushed to log files
+if [[ -n "${MINTY_TEE:-}" ]]; then
+    # Restore original stdout/stderr before closing
+    exec 1>&3 2>&4
+    # Give tee a moment to finish writing
+    sleep 1
+    echo "[DEBUG] Tee process should have completed"
+fi
 
 exit $EXIT_CODE
