@@ -12,6 +12,7 @@ reports/
 # Logs directory (generated output)
 logs/
 !logs/.gitkeep
+!logs/README.md
 
 # Environment files
 .env
