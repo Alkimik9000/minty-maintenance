@@ -73,6 +73,15 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# If manifest provided, read dry_run value from it
+if [[ -n "$MANIFEST_PATH" && -f "$MANIFEST_PATH" ]]; then
+    # Extract dry_run value from JSON manifest
+    MANIFEST_DRY_RUN=$(python3 -c "import json; print(str(json.load(open('$MANIFEST_PATH'))['dry_run']).lower())" 2>/dev/null || echo "false")
+    if [[ "$MANIFEST_DRY_RUN" == "true" ]]; then
+        DRY_RUN=true
+    fi
+fi
+
 # Log run start
 log_audit "run_start" "\"run_id\":\"$RUN_ID\",\"dry_run\":$DRY_RUN,\"manifest\":\"${MANIFEST_PATH:-none}\""
 
@@ -82,6 +91,9 @@ run_orchestrator() {
     
     # If MINTY_TEE is set, use tee for master logging
     if [[ -n "${MINTY_TEE:-}" ]]; then
+        # Ensure master log file exists
+        touch "$MASTER_LOG"
+        
         # Redirect both stdout and stderr through tee to master log
         exec > >(stdbuf -oL -eL tee -a "$MASTER_LOG")
         exec 2>&1

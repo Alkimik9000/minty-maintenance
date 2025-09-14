@@ -291,9 +291,11 @@ class CommandRunner:
         """
         self.reporter.say("\n🔧 Now I'm going to: " + description)
         
+        # Always show the actual command for debugging/logging
+        self.reporter.say("   Command: " + " ".join(command))
+        
         if self.dry_run:
             self.reporter.say("   (Test mode: Just checking what would happen)")
-            self.reporter.say("   Command: " + " ".join(command))
             return (True, "")
         
         # Capture space before operation
@@ -301,6 +303,8 @@ class CommandRunner:
         
         try:
             if capture_output:
+                # Show command execution in real time for better logging
+                self.reporter.say("   Executing...")
                 result = subprocess.run(
                     command,
                     capture_output=True,
@@ -309,17 +313,29 @@ class CommandRunner:
                 )
                 output = result.stdout
                 
-                # Show relevant output lines
-                if output:
-                    important_lines = []
-                    for line in output.split('\n'):
-                        if any(word in line.lower() for word in 
-                               ['upgraded', 'removed', 'freed', 'installed', 'cleaned']):
-                            important_lines.append(line)
-                    
-                    if important_lines:
-                        for line in important_lines[:5]:
-                            self.reporter.say("   " + line)
+                # Show all output if we're in verbose logging mode (when MINTY_TEE is set)
+                if os.environ.get('MINTY_TEE'):
+                    # Show complete output for logging
+                    if output.strip():
+                        self.reporter.say("   Output:")
+                        for line in output.strip().split('\n'):
+                            self.reporter.say("   > " + line)
+                    if result.stderr and result.stderr.strip():
+                        self.reporter.say("   Errors:")
+                        for line in result.stderr.strip().split('\n'):
+                            self.reporter.say("   ! " + line)
+                else:
+                    # Show only relevant output lines for interactive mode
+                    if output:
+                        important_lines = []
+                        for line in output.split('\n'):
+                            if any(word in line.lower() for word in 
+                                   ['upgraded', 'removed', 'freed', 'installed', 'cleaned']):
+                                important_lines.append(line)
+                        
+                        if important_lines:
+                            for line in important_lines[:5]:
+                                self.reporter.say("   " + line)
             else:
                 result = subprocess.run(command, check=check)
                 output = ""
