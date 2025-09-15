@@ -108,7 +108,7 @@ run_orchestrator() {
     echo ""
     
     # Build Python command
-    PYTHON_CMD=("$PYTHON" "$SCRIPT_DIR/mint-maintainer-modular.py")
+    PYTHON_CMD=("$PYTHON" "$SCRIPT_DIR/src/core/mint-maintainer-modular.py")
     
     if [[ -n "$MANIFEST_PATH" ]]; then
         PYTHON_CMD+=("--manifest" "$MANIFEST_PATH")

@@ -325,7 +325,7 @@ class RunView(Screen):
         progress_bar = self.query_one("#progress-bar", ProgressBar)
         
         # Get script path
-        script_path = Path(__file__).parent.parent / "mint-maintainer-runner.sh"
+        script_path = Path(__file__).parent.parent.parent / "tools" / "mint-maintainer-runner.sh"
         if not script_path.exists():
             log_viewer.write("[red]Error: mint-maintainer-runner.sh not found[/red]")
             self.onComplete(success=False)

@@ -1,51 +1,31 @@
 # 🍃 minty-maintenance Project Structure
 
 ## Overview
-This document describes the organized structure of the minty-maintenance project.
+This document describes the organized structure of the minty-maintenance project with minimal home directory clutter.
 
 ## Directory Structure
 
 ```
 minty-maintenance/
-├── docs/                          # Documentation
-│   ├── features/                  # Feature documentation
-│   │   ├── LOGGING_FEATURE.md    # Logging system documentation
-│   │   ├── README_TUI.md         # TUI documentation
-│   │   └── REPORT_SAMPLE.md      # Sample report format
+├── src/                          # Source code
+│   ├── core/                     # Core application logic
+│   │   └── mint-maintainer-modular.py  # Main orchestrator
+│   ├── modules/                  # Maintenance modules
+│   │   ├── apps/                 # Application management
+│   │   ├── cleanup/              # System cleanup
+│   │   ├── health/               # Health checks
+│   │   ├── system/               # System maintenance
+│   │   └── utils/                # Shared utilities
+│   └── ui/                       # User Interface
+│       ├── minty_tui.py         # Terminal User Interface
+│       └── manifest.example.json # Example manifest
+├── config/                       # Configuration files
+│   ├── requirements.txt          # Python dependencies
+│   ├── RULES.md                  # Project rules
+│   └── Makefile                  # Build automation
+├── docs/                         # Documentation
+│   ├── features/                 # Feature documentation
 │   └── development/              # Development documentation
-│       ├── MIGRATIONS.md         # Migration history
-│       └── PROJECT_STRUCTURE.md  # This file
-├── scripts/                      # Maintenance modules
-│   ├── apps/                     # Application management
-│   │   ├── flatpak_updates.py
-│   │   ├── gnome_extensions.py
-│   │   ├── homebrew_updates.py
-│   │   ├── python_updates.py
-│   │   ├── snap_updates.py
-│   │   └── standalone_apps.py
-│   ├── cleanup/                  # System cleanup
-│   │   ├── deep_clean.py
-│   │   ├── docker_cleanup.py
-│   │   ├── kernel_cleanup.py
-│   │   └── log_cleanup.py
-│   ├── health/                   # Health checks
-│   │   ├── disk_health.py
-│   │   ├── gpu_check.py
-│   │   └── system_health.py
-│   ├── system/                   # System maintenance
-│   │   ├── apt_updates.py
-│   │   ├── auto_updates.py
-│   │   ├── firmware_updates.py
-│   │   ├── package_sanity.py
-│   │   ├── search_database.py
-│   │   ├── ssd_optimization.py
-│   │   └── timeshift_checkpoint.py
-│   └── utils/                    # Shared utilities
-│       ├── __init__.py
-│       └── utils.py
-├── tui/                          # Terminal User Interface
-│   ├── minty_tui.py             # Main TUI application
-│   └── manifest.example.json    # Example manifest format
 ├── tools/                        # Development and utility tools
 │   ├── install-global-command.sh # Global command installer
 │   ├── mint-maintainer-runner.sh # Logging-enabled runner
@@ -54,13 +34,36 @@ minty-maintenance/
 ├── reports/                      # Generated reports (gitignored)
 ├── .venv/                        # Python virtual environment (gitignored)
 ├── mint-maintainer.sh            # Main entry point
-├── mint-maintainer-modular.py    # Python orchestrator
-├── requirements.txt              # Python dependencies
-├── Makefile                      # Build automation
 ├── README.md                     # Main project documentation
-├── RULES.md                      # Project rules and conventions
 └── LICENSE                       # License file
 ```
+
+## File Organization Principles
+
+### 1. **Minimal Root Directory**
+Only essential files in the root:
+- `mint-maintainer.sh` - Main entry point
+- `README.md` - Project overview
+- `LICENSE` - Legal information
+
+### 2. **Source Code in `src/`**
+All source code organized by purpose:
+- `core/` - Main application logic
+- `modules/` - Feature modules by category
+- `ui/` - User interface components
+
+### 3. **Configuration in `config/`**
+All configuration files centralized:
+- Dependencies, rules, build files
+
+### 4. **Documentation in `docs/`**
+Structured documentation:
+- `features/` - User-facing features
+- `development/` - Developer information
+
+### 5. **Tools in `tools/`**
+Development and utility scripts:
+- Installation, testing, development helpers
 
 ## File Naming Conventions
 
@@ -80,28 +83,26 @@ minty-maintenance/
 
 ### Configuration Files
 - **Examples**: `name.example.ext` (e.g., `manifest.example.json`)
-- **Templates**: `name.template.ext`
+- **Dependencies**: `requirements.txt`
 
 ## Key Directories
 
+### `/src/`
+Source code organized by functionality:
+- `core/` - Main orchestrator and application logic
+- `modules/` - Modular maintenance scripts by category
+- `ui/` - Terminal User Interface components
+
+### `/config/`
+All configuration and build files:
+- Python dependencies
+- Project rules and conventions
+- Build automation
+
 ### `/docs/`
-Contains all project documentation organized by type:
+Comprehensive documentation:
 - `features/` - User-facing feature documentation
 - `development/` - Developer documentation and project structure
-
-### `/scripts/`
-Modular maintenance scripts organized by category:
-- `system/` - Core system maintenance
-- `apps/` - Application management
-- `cleanup/` - System cleanup operations
-- `health/` - Health monitoring and checks
-- `utils/` - Shared utilities and common functions
-
-### `/tui/`
-Terminal User Interface components:
-- Main TUI application
-- Configuration examples
-- UI-related documentation
 
 ### `/tools/`
 Development and utility tools:
@@ -113,8 +114,8 @@ Development and utility tools:
 ## Entry Points
 
 1. **`mint-maintainer.sh`** - Main entry point for users
-2. **`mint-maintainer-modular.py`** - Python orchestrator
-3. **`tui/minty_tui.py`** - Interactive TUI application
+2. **`src/core/mint-maintainer-modular.py`** - Python orchestrator
+3. **`src/ui/minty_tui.py`** - Interactive TUI application
 4. **`tools/minty`** - Global command wrapper
 
 ## Dependencies
@@ -122,6 +123,25 @@ Development and utility tools:
 - **Python 3.8+** - Core runtime
 - **Textual** - TUI framework (auto-installed)
 - **Standard Linux tools** - APT, system utilities
+
+## Path References
+
+### Updated Import Paths
+```python
+# Old: from scripts.utils.utils import ...
+# New: from utils.utils import ...
+
+# Old: scripts.system.apt_updates
+# New: system.apt_updates
+```
+
+### Updated File Paths
+```bash
+# TUI: src/ui/minty_tui.py
+# Core: src/core/mint-maintainer-modular.py
+# Config: config/requirements.txt
+# Tools: tools/mint-maintainer-runner.sh
+```
 
 ## Git Ignore Patterns
 
@@ -134,8 +154,16 @@ Development and utility tools:
 
 ## Development Workflow
 
-1. **Feature Development**: Add modules to appropriate `/scripts/` category
+1. **Feature Development**: Add modules to appropriate `/src/modules/` category
 2. **Documentation**: Update relevant files in `/docs/`
 3. **Testing**: Use tools in `/tools/` for testing
 4. **Integration**: Update orchestrator and TUI as needed
 5. **Deployment**: Use global command installer for distribution
+
+## Benefits of This Structure
+
+- **Clean Root**: Only essential files visible
+- **Logical Grouping**: Related files organized together
+- **Scalable**: Easy to add new modules and features
+- **Maintainable**: Clear separation of concerns
+- **Professional**: Industry-standard project layout

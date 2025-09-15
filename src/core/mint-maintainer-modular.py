@@ -17,10 +17,10 @@ import importlib.util
 import subprocess
 from typing import Dict, Optional
 
-# Add scripts directory to path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add modules directory to path
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'modules'))
 
-from scripts.utils.utils import (
+from utils.utils import (
     MaintenanceReporter, 
     CommandRunner, 
     sendDesktopNotification
@@ -53,140 +53,140 @@ class MaintenanceOrchestrator:
         chapters = {
             1: {
                 'name': 'Safety Checkpoint',
-                'module': 'scripts.system.timeshift_checkpoint',
+                'module': 'system.timeshift_checkpoint',
                 'function': 'createTimeshiftCheckpoint',
                 'category': 'system',
                 'module_id': 'sys:timeshift'
             },
             2: {
                 'name': 'Homebrew Updates',
-                'module': 'scripts.apps.homebrew_updates',
+                'module': 'apps.homebrew_updates',
                 'function': 'updateHomebrew',
                 'category': 'apps',
                 'module_id': 'apps:check_brew'
             },
             3: {
                 'name': 'APT System Updates', 
-                'module': 'scripts.system.apt_updates',
+                'module': 'system.apt_updates',
                 'function': 'performAptUpdates',
                 'category': 'system',
                 'module_id': 'sys:update_apt'
             },
             4: {
                 'name': 'Package Sanity Checks',
-                'module': 'scripts.system.package_sanity',
+                'module': 'system.package_sanity',
                 'function': 'checkPackageSanity',
                 'category': 'system',
                 'module_id': 'clean:orphans'
             },
             5: {
                 'name': 'Flatpak Applications',
-                'module': 'scripts.apps.flatpak_updates',
+                'module': 'apps.flatpak_updates',
                 'function': 'updateFlatpakApps',
                 'category': 'apps',
                 'module_id': 'apps:update_flatpak'
             },
             6: {
                 'name': 'Snap Applications',
-                'module': 'scripts.apps.snap_updates',
+                'module': 'apps.snap_updates',
                 'function': 'updateSnapApps',
                 'category': 'apps',
                 'module_id': 'apps:update_snap'
             },
             7: {
                 'name': 'Python Tools',
-                'module': 'scripts.apps.python_updates',
+                'module': 'apps.python_updates',
                 'function': 'updatePythonTools',
                 'category': 'apps',
                 'module_id': 'apps:update_python'
             },
             8: {
                 'name': 'Standalone Applications Check',
-                'module': 'scripts.apps.standalone_apps',
+                'module': 'apps.standalone_apps',
                 'function': 'checkStandaloneApps',
                 'category': 'apps',
                 'module_id': 'apps:scan_standalone'
             },
             9: {
                 'name': 'Firmware Updates',
-                'module': 'scripts.system.firmware_updates',
+                'module': 'system.firmware_updates',
                 'function': 'updateFirmware',
                 'category': 'system',
                 'module_id': 'sys:update_firmware'
             },
             10: {
                 'name': 'Log Cleanup',
-                'module': 'scripts.cleanup.log_cleanup',
+                'module': 'cleanup.log_cleanup',
                 'function': 'cleanupLogs',
                 'category': 'cleanup',
                 'module_id': 'clean:logs'
             },
             11: {
                 'name': 'Kernel Cleanup',
-                'module': 'scripts.cleanup.kernel_cleanup',
+                'module': 'cleanup.kernel_cleanup',
                 'function': 'cleanupKernels',
                 'category': 'cleanup',
                 'module_id': 'sys:manage_kernels'
             },
             12: {
                 'name': 'Disk Health Check',
-                'module': 'scripts.health.disk_health',
+                'module': 'health.disk_health',
                 'function': 'checkDiskHealth',
                 'category': 'health',
                 'module_id': 'health:disk'
             },
             13: {
                 'name': 'GNOME Extensions',
-                'module': 'scripts.apps.gnome_extensions',
+                'module': 'apps.gnome_extensions',
                 'function': 'updateGnomeExtensions',
                 'category': 'apps',
                 'module_id': None  # Not in TUI
             },
             14: {
                 'name': 'Docker Cleanup',
-                'module': 'scripts.cleanup.docker_cleanup',
+                'module': 'cleanup.docker_cleanup',
                 'function': 'cleanupDocker',
                 'category': 'cleanup',
                 'module_id': 'clean:docker'
             },
             15: {
                 'name': 'Search Database Update',
-                'module': 'scripts.system.search_database',
+                'module': 'system.search_database',
                 'function': 'updateSearchDatabase',
                 'category': 'system',
                 'module_id': 'clean:updatedb'
             },
             16: {
                 'name': 'Deep Clean',
-                'module': 'scripts.cleanup.deep_clean',
+                'module': 'cleanup.deep_clean',
                 'function': 'performDeepClean',
                 'category': 'cleanup',
                 'module_id': 'clean:bleachbit'
             },
             17: {
                 'name': 'SSD Optimization',
-                'module': 'scripts.system.ssd_optimization',
+                'module': 'system.ssd_optimization',
                 'function': 'optimizeSSD',
                 'category': 'system',
                 'module_id': 'sys:optimize_ssd'
             },
             18: {
                 'name': 'System Health Check',
-                'module': 'scripts.health.system_health',
+                'module': 'health.system_health',
                 'function': 'checkSystemHealth',
                 'category': 'health',
                 'module_id': 'health:services'
             },
             19: {
                 'name': 'Graphics Card Check',
-                'module': 'scripts.health.gpu_check',
+                'module': 'health.gpu_check',
                 'function': 'checkGraphicsCard',
                 'category': 'health',
                 'module_id': 'health:gpu'
             },
             20: {
                 'name': 'Automatic Updates Check',
-                'module': 'scripts.system.auto_updates',
+                'module': 'system.auto_updates',
                 'function': 'checkAutoUpdates',
                 'category': 'system',
                 'module_id': 'health:auto_updates'
