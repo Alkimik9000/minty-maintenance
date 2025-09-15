@@ -64,7 +64,7 @@ All commits MUST follow Conventional Commits specification:
 ### Commit Frequency
 - Commit early and often
 - Each logical change should be a separate commit
-- Don't bundle unrelated changes
+-o Don't bundle unrelated changes
 
 ## Project Structure Rules
 

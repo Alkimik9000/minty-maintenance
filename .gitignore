@@ -49,7 +49,19 @@ dry-run-reports/
 .directory
 *.pid
 *.lock
+# Cursor AI optimization files
 .cursorignore
 .cursorrules
 CURSOR_CONTEXT.md
 CURSOR_PATTERNS.md
+
+# Development and testing
+tools/test-*.sh
+logs/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

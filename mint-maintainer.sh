@@ -37,12 +37,12 @@ fi
 # Check if running with --manifest option
 if [[ $# -eq 2 && "$1" == "--manifest" ]]; then
     # Run the runner script with manifest for logging support
-    exec bash "$SCRIPT_DIR/mint-maintainer-runner.sh" "$@"
+    exec bash "$SCRIPT_DIR/tools/mint-maintainer-runner.sh" "$@"
 elif [[ $# -eq 0 || "$1" == "dry-run" ]]; then
     # Check if textual is installed
     if "$PYTHON" -c "import textual" 2>/dev/null; then
         # Launch the interactive TUI
-        manifest_path=$("$PYTHON" "$SCRIPT_DIR/menu/maintenance_tui.py")
+        manifest_path=$("$PYTHON" "$SCRIPT_DIR/tui/minty_tui.py")
         
         # If manifest was created (user clicked Run), execute it
         if [[ -n "$manifest_path" && -f "$manifest_path" ]]; then
@@ -57,7 +57,7 @@ elif [[ $# -eq 0 || "$1" == "dry-run" ]]; then
         # Check again with venv Python
         if "$VENV_DIR/bin/python3" -c "import textual" 2>/dev/null; then
             # Launch the interactive TUI with venv Python
-            manifest_path=$("$VENV_DIR/bin/python3" "$SCRIPT_DIR/menu/maintenance_tui.py")
+            manifest_path=$("$VENV_DIR/bin/python3" "$SCRIPT_DIR/tui/minty_tui.py")
             
             # If manifest was created (user clicked Run), execute it
             if [[ -n "$manifest_path" && -f "$manifest_path" ]]; then
