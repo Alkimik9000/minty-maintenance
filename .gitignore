@@ -1,39 +1,15 @@
-# Bash logs and temporary files
-*.log
-*.tmp
-*.swp
-*.swo
-*~
-
-# Reports directory (generated output)
-reports/
-!reports/.gitkeep
-
-# Logs directory (generated output)
-logs/
-!logs/.gitkeep
-!logs/README.md
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# Editor cruft
-.vscode/
-.idea/
-*.sublime-*
-.DS_Store
-Thumbs.db
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 .Python
+*.so
 venv/
 ENV/
 env/
+.venv/
+
+# Virtual Environment
 .venv/
 
 # Backup files
@@ -41,27 +17,74 @@ env/
 *.backup
 *.old
 
-# Test output
-test-output/
-dry-run-reports/
+# Reports and logs
+reports/
+logs/
+*.log
 
 # System files
+.DS_Store
+Thumbs.db
+*~
+.*.swp
 .directory
 *.pid
 *.lock
-# Cursor AI optimization files
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Documentation builds
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# Git
+.git/
+
+# Large binary files
+*.pdf
+*.zip
+*.tar.gz
+*.iso
+
+# Test outputs
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+test-output/
+dry-run-reports/
+
+# Node (if any frontend is added later)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Cursor AI optimization files (development only - keep local)
 .cursorignore
 .cursorrules
 CURSOR_CONTEXT.md
 CURSOR_PATTERNS.md
 
-# Development and testing
+# Development and testing tools
 tools/test-*.sh
-logs/
-*.log
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
